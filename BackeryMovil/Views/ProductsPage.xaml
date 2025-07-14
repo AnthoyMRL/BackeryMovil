@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="BackeryMovil.Views.ProductsPage"
+            xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+            xmlns:viewmodels="clr-namespace:BackeryMovil.ViewModels"
+            xmlns:models="clr-namespace:BackeryMovil.Models"
+            xmlns:converters="clr-namespace:BackeryMovil.Converters"
+            x:DataType="viewmodels:ProductsViewModel"
+            Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Inicio"
+                     IconImageSource="home.png"
+            Clicked="OnHomeToolbarItemClicked"
+                     Order="Primary" />
+    </ContentPage.ToolbarItems>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style x:Key="CardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="Padding" Value="10" />
+                <Setter Property="Margin" Value="5" />
+            </Style>
+
+            <converters:ImageSourceConverter x:Key="ImageSourceConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- Search Bar -->
+        <SearchBar Grid.Row="0" 
+                  Text="{Binding SearchText}"
+                  Placeholder="Buscar productos..."
+                  SearchCommand="{Binding SearchCommand}"
+                  SearchCommandParameter="{Binding SearchText}"
+                  Margin="10"/>
+
+        <!-- Action Buttons -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Margin="10,0">
+            <Button Grid.Column="0" 
+                   Text="Agregar" 
+                   Command="{Binding AddProductCommand}"
+                   BackgroundColor="#28a745"
+                   TextColor="White"/>
+
+            <Button Grid.Column="1" 
+                   Text="Sincronizar" 
+                   Command="{Binding SyncCommand}"
+                   BackgroundColor="#007bff"
+                   TextColor="White"
+                   Margin="5,0"/>
+
+            <Button Grid.Column="2" 
+                   Text="Exportar" 
+                   BackgroundColor="#6c757d"
+                   TextColor="White"/>
+        </Grid>
+
+        <!-- Products List -->
+        <CollectionView Grid.Row="2" 
+                       ItemsSource="{Binding Products}"
+                       Margin="10">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Product">
+                    <Frame BackgroundColor="White" CornerRadius="10" HasShadow="True" Padding="10" Margin="0,5">
+                        <Grid ColumnDefinitions="80,*,Auto" 
+                             RowDefinitions="Auto,Auto,Auto,Auto,Auto" 
+                             Padding="0"
+                             BackgroundColor="White"
+                             Margin="0">
+
+                            <!-- Product Image -->
+                            <Frame Grid.RowSpan="4" 
+                                  Grid.Column="0"
+                                  Style="{StaticResource CardStyle}"
+                                  HeightRequest="80"
+                                  WidthRequest="80"
+                                  BackgroundColor="LightGray">
+                                <Image Source="{Binding ImagePath, Converter={StaticResource ImageSourceConverter}}"
+                                      Aspect="AspectFill"
+                                      HorizontalOptions="Center"
+                                      VerticalOptions="Center"/>
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ProductsViewModel}}, Path=PickPhotoCommand}"
+                                                         CommandParameter="{Binding}"/>
+                                </Frame.GestureRecognizers>
+                            </Frame>
+
+                            <!-- Product Info -->
+                            <Label Grid.Row="0" Grid.Column="1" 
+                                  Text="{Binding Name}"
+                                  FontSize="16"
+                                  FontAttributes="Bold"
+                                  Margin="10,0"/>
+
+                            <Label Grid.Row="1" Grid.Column="1" 
+                                  Text="{Binding Description}"
+                                  FontSize="12"
+                                  TextColor="Gray"
+                                  Margin="10,0"/>
+
+                            <Label Grid.Row="2" Grid.Column="1" 
+                                  Text="{Binding Price, StringFormat='${0:F2}'}"
+                                  FontSize="14"
+                                  FontAttributes="Bold"
+                                  TextColor="Green"
+                                  Margin="10,0"/>
+
+                            <StackLayout Grid.Row="3" Grid.Column="1" 
+                                        Orientation="Horizontal"
+                                        Margin="10,0">
+                                <Label Text="{Binding Category.Name}"
+                                      FontSize="10"
+                                      BackgroundColor="LightBlue"
+                                      Padding="5,2"
+                                      TextColor="DarkBlue"/>
+
+                                <Label Text="{Binding StockQuantity, StringFormat='Stock: {0}'}"
+                                      FontSize="10"
+                                      BackgroundColor="LightGreen"
+                                      Padding="5,2"
+                                      TextColor="DarkGreen"
+                                      Margin="5,0,0,0"/>
+                            </StackLayout>
+
+                            <!-- Action Buttons (Edit, Delete, Photo) -->
+                            <StackLayout Grid.RowSpan="4" Grid.Column="2" 
+                                        Orientation="Vertical"
+                                        VerticalOptions="Center">
+
+                                <Button Text="📷"
+                                       FontSize="16"
+                                       WidthRequest="40"
+                                       HeightRequest="40"
+                                       BackgroundColor="Transparent"
+                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ProductsViewModel}}, Path=TakePhotoCommand}"
+                                       CommandParameter="{Binding}"/>
+
+                                <Button Text="✏️"
+                                       FontSize="16"
+                                       WidthRequest="40"
+                                       HeightRequest="40"
+                                       BackgroundColor="Transparent"
+                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ProductsViewModel}}, Path=EditProductCommand}"
+                                       CommandParameter="{Binding}"/>
+
+                                <Button Text="🗑️"
+                                       FontSize="16"
+                                       WidthRequest="40"
+                                       HeightRequest="40"
+                                       BackgroundColor="Transparent"
+                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ProductsViewModel}}, Path=DeleteProductCommand}"
+                                       CommandParameter="{Binding}"/>
+                            </StackLayout>
+
+                            <!-- Add to Cart Button (New Row) -->
+                            <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
+                                   Text="Añadir al Carrito"
+                                   Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ProductsViewModel}}, Path=AddToCartCommand}"
+                                   CommandParameter="{Binding}"
+                                   BackgroundColor="#D2691E"
+                                   TextColor="White"
+                                   Margin="0,10,0,0"/>
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Loading Indicator -->
+        <ActivityIndicator Grid.Row="3" 
+                          IsVisible="{Binding IsBusy}"
+                          IsRunning="{Binding IsBusy}"
+                          Color="#007bff"
+                          Margin="10"/>
+    </Grid>
+</ContentPage>

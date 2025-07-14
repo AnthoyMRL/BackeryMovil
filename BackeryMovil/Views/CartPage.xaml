@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="BackeryMovil.Views.CartPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:BackeryMovil.ViewModels"
+             xmlns:models="clr-namespace:BackeryMovil.Models"
+             xmlns:converters="clr-namespace:BackeryMovil.Converters"
+             x:DataType="viewmodels:CartViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="#F0F2F5">
+    <!-- Fondo más suave y moderno -->
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:ImageSourceConverter x:Key="ImageSourceConverter" />
+            <Style x:Key="CartItemFrameStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="CornerRadius" Value="10" />
+                <!-- Ligeramente menos redondeado -->
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="Padding" Value="10" />
+                <Setter Property="Margin" Value="0,6" />
+                <!-- Margen más compacto -->
+                <Setter Property="BorderColor" Value="#E0E0E0" />
+                <Setter Property="Shadow" Value="1,1,5,LightGray" />
+                <!-- Sombra más sutil -->
+            </Style>
+            <!-- Estilo para el Entry de cantidad -->
+            <Style x:Key="QuantityEntryStyle" TargetType="Entry">
+                <Setter Property="Keyboard" Value="Numeric" />
+                <Setter Property="WidthRequest" Value="60" />
+                <!-- Más ancho para la entrada directa -->
+                <Setter Property="HorizontalTextAlignment" Value="Center" />
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="TextColor" Value="#333333" />
+                <Setter Property="BackgroundColor" Value="#F8F8F8" />
+                <!-- Fondo más claro para el entry -->
+                <Setter Property="VerticalOptions" Value="Center" />
+                <Setter Property="Margin" Value="0,0,0,0" />
+            </Style>
+            <!-- Estilo para los botones de acción principales -->
+            <Style x:Key="ActionButtonStyle" TargetType="Button">
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="HeightRequest" Value="45" />
+                <!-- Ligeramente más bajo -->
+                <Setter Property="FontSize" Value="15" />
+                <!-- Fuente más pequeña -->
+                <Setter Property="FontAttributes" Value="Bold" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto,Auto">
+        <!-- Cart Items List -->
+        <CollectionView Grid.Row="0" 
+                        ItemsSource="{Binding CartItems}"
+                        EmptyView="Tu carrito está vacío. ¡Añade algunos productos!"
+                        Margin="15,10">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:CartItem">
+                    <Frame Style="{StaticResource CartItemFrameStyle}">
+                        <Grid ColumnDefinitions="70,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10">
+                            <!-- Product Image -->
+                            <Image Grid.RowSpan="3" Grid.Column="0"
+                                   Source="{Binding Product.ImagePath, Converter={StaticResource ImageSourceConverter}}"
+                                   Aspect="AspectFill"
+                                   HeightRequest="60" WidthRequest="60"
+                                   VerticalOptions="Center" HorizontalOptions="Center"
+                                   Margin="0,0,5,0"/>
+
+                            <StackLayout Grid.Row="0" Grid.Column="1" VerticalOptions="Center">
+                                <!-- Product Name -->
+                                <Label Text="{Binding Product.Name}"
+                                       FontSize="16" FontAttributes="Bold" TextColor="#333333"
+                                       LineBreakMode="TailTruncation"/>
+                                <!-- Price per unit -->
+                                <Label Text="{Binding Product.Price, StringFormat='${0:F2} / unidad'}"
+                                       FontSize="12" TextColor="#666666"/>
+                            </StackLayout>
+
+                            <!-- Quantity Control and Item Total -->
+                            <StackLayout Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalOptions="Center" HorizontalOptions="Start">
+                                <Label Text="Cantidad:" FontSize="13" TextColor="#666666" VerticalOptions="Center"/>
+
+                                <!-- Entry de cantidad envuelto en Border para CornerRadius -->
+                                <Border StrokeShape="RoundRectangle 5" StrokeThickness="0" BackgroundColor="#F8F8F8"
+                                        VerticalOptions="Center">
+                                    <Entry Text="{Binding Quantity}"
+                                           Style="{StaticResource QuantityEntryStyle}"
+                                           Completed="OnQuantityCompleted"/>
+                                </Border>
+
+                                <!-- Total Price for Item -->
+                                <Label Text="{Binding TotalPrice, StringFormat='Total: ${0:F2}'}"
+                                       FontSize="15" FontAttributes="Bold" TextColor="#D2691E"
+                                       VerticalOptions="Center" Margin="10,0,0,0"/>
+                            </StackLayout>
+
+                            <!-- Remove Button -->
+                            <Button Grid.RowSpan="3" Grid.Column="2"
+                                    Text="🗑️"
+                                    FontSize="20"
+                                    BackgroundColor="Transparent"
+                                    TextColor="#DC3545"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CartViewModel}}, Path=RemoveItemCommand}"
+                                    CommandParameter="{Binding}"
+                                    VerticalOptions="Center" HorizontalOptions="End"
+                                    WidthRequest="45" HeightRequest="45"/>
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Total Amount -->
+        <Frame Grid.Row="1" BackgroundColor="White" CornerRadius="10" Padding="15" Margin="15,8" HasShadow="True" BorderColor="#E0E0E0">
+            <StackLayout Orientation="Horizontal" HorizontalOptions="CenterAndExpand" VerticalOptions="Center">
+                <Label Text="Total del Carrito:" FontSize="18" FontAttributes="Bold" TextColor="#333333"/>
+                <Label Text="{Binding TotalAmount, StringFormat='${0:F2}'}"
+                       FontSize="20" FontAttributes="Bold" TextColor="#28A745"
+                       Margin="10,0,0,0"/>
+            </StackLayout>
+        </Frame>
+
+        <!-- Action Buttons -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="15,8,15,15">
+            <!-- Botón "Vaciar Carrito" envuelto en Border -->
+            <Border Grid.Column="0" StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#DC3545">
+                <Button Text="Vaciar Carrito" Command="{Binding ClearCartCommand}" 
+                        Style="{StaticResource ActionButtonStyle}" BackgroundColor="Transparent"/>
+            </Border>
+            <!-- Botón "Pagar" envuelto en Border -->
+            <Border Grid.Column="1" StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#28A745">
+                <Button Text="Pagar" Command="{Binding CheckoutCommand}" 
+                        Style="{StaticResource ActionButtonStyle}" BackgroundColor="Transparent"/>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -3,13 +3,26 @@
     x:Class="BackeryMovil.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:BackeryMovil"
+    xmlns:local="clr-namespace:BackeryMovil.Views"
     Shell.FlyoutBehavior="Disabled"
     Title="BackeryMovil">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <Shell.FlyoutHeader>
+        <Grid BackgroundColor="#8B4513" HeightRequest="150">
+            <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
+                <Label Text="🧁" FontSize="50"/>
+                <Label Text="Sweet Delights" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+                <Label Text="Bakery" FontSize="16" TextColor="White"/>
+            </StackLayout>
+        </Grid>
+    </Shell.FlyoutHeader>
+
+    <FlyoutItem Title="Home" Icon="home.png">
+        <ShellContent Route="main" ContentTemplate="{DataTemplate local:MainPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Products" Icon="products.png">
+        <ShellContent Route="products" ContentTemplate="{DataTemplate local:ProductsPage}" />
+    </FlyoutItem>
 
 </Shell>

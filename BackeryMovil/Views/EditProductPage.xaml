@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="BackeryMovil.Views.EditProductPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:BackeryMovil.ViewModels"
+             xmlns:models="clr-namespace:BackeryMovil.Models"
+             xmlns:converters="clr-namespace:BackeryMovil.Converters"
+             x:DataType="viewmodels:EditProductViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:ImageSourceConverter x:Key="ImageSourceConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+            <Frame BackgroundColor="#F5F5F5" CornerRadius="10" Padding="15">
+                <StackLayout Spacing="10">
+                    <Label Text="Detalles del Producto" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" TextColor="#8B4513"/>
+                    <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="#D2691E" />
+
+                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                        <!-- Product Image -->
+                        <Frame Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                               HeightRequest="150" WidthRequest="150" CornerRadius="75"
+                               HorizontalOptions="Center" VerticalOptions="Center"
+                               BackgroundColor="LightGray" HasShadow="True">
+                            <Image Source="{Binding Product.ImagePath, Converter={StaticResource ImageSourceConverter}}"
+                                   Aspect="AspectFill"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickPhotoCommand}"/>
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                Text="Tomar Foto"
+                                Command="{Binding TakePhotoCommand}"
+                                BackgroundColor="#CD853F" TextColor="White"
+                                HorizontalOptions="Center" WidthRequest="150"/>
+                        <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                Text="Seleccionar Foto"
+                                Command="{Binding PickPhotoCommand}"
+                                BackgroundColor="#CD853F" TextColor="White"
+                                HorizontalOptions="Center" WidthRequest="150"/>
+
+                        <!-- Name -->
+                        <Label Grid.Row="3" Grid.Column="0" Text="Nombre:" VerticalOptions="Center" FontAttributes="Bold" TextColor="Black"/>
+                        <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Product.Name}" Placeholder="Nombre del producto" TextColor="Black"/>
+
+                        <!-- Description -->
+                        <Label Grid.Row="4" Grid.Column="0" Text="Descripción:" VerticalOptions="Center" FontAttributes="Bold" TextColor="Black"/>
+                        <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Product.Description}" Placeholder="Descripción del producto" TextColor="Black"/>
+
+                        <!-- Price -->
+                        <Label Grid.Row="5" Grid.Column="0" Text="Precio:" VerticalOptions="Center" FontAttributes="Bold" TextColor="Black"/>
+                        <Entry Grid.Row="5" Grid.Column="1" Text="{Binding Product.Price}" Keyboard="Numeric" Placeholder="0.00" TextColor="Black"/>
+
+                        <!-- Stock Quantity -->
+                        <Label Grid.Row="6" Grid.Column="0" Text="Stock:" VerticalOptions="Center" FontAttributes="Bold" TextColor="Black"/>
+                        <Entry Grid.Row="6" Grid.Column="1" Text="{Binding Product.StockQuantity}" Keyboard="Numeric" Placeholder="0" TextColor="Black"/>
+
+                        <!-- Category -->
+                        <Label Grid.Row="7" Grid.Column="0" Text="Categoría:" VerticalOptions="Center" FontAttributes="Bold" TextColor="Black"/>
+                        <Picker Grid.Row="7" Grid.Column="1"
+                                ItemsSource="{Binding Categories}"
+                                ItemDisplayBinding="{Binding Name}"
+                                SelectedItem="{Binding SelectedCategory}"
+                                TextColor="Black"/>
+                    </Grid>
+                </StackLayout>
+            </Frame>
+
+            <!-- Action Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20,0,0">
+                <Button Grid.Column="0" Text="Guardar" Command="{Binding SaveProductCommand}" BackgroundColor="#28a745" TextColor="White"/>
+                <Button Grid.Column="1" Text="Cancelar" Command="{Binding CancelCommand}" BackgroundColor="#dc3545" TextColor="White"/>
+            </Grid>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="BackeryMovil.Views.MainPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Bakery Shop">
+
+    <ScrollView>
+        <StackLayout Padding="20">
+            <!-- Header -->
+            <Frame BackgroundColor="#8B4513" CornerRadius="10" Padding="20" Margin="0,0,0,20">
+                <StackLayout>
+                    <Label Text="🧁 Bakery Shop" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White" 
+                           HorizontalOptions="Center"/>
+                    <Label Text="Dulces momentos, horneados con amor." 
+                           FontSize="16" 
+                           TextColor="White" 
+                           HorizontalOptions="Center"/>
+                </StackLayout>
+            </Frame>
+
+            <!-- Quick Actions -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" Margin="0,0,0,20">
+                <Button Grid.Column="0" 
+                        Text="Buscar Productos" 
+                        BackgroundColor="#D2691E" 
+                        TextColor="White"
+                        Clicked="OnBrowseProductsClicked"/>
+                <Button Grid.Column="1" 
+                        Text="Ver carrito" 
+                        BackgroundColor="#CD853F" 
+                        TextColor="White"
+                        Clicked="OnViewCartClicked"/>
+            </Grid>
+
+            <!-- Categories -->
+            <Label Text="Categorias" FontSize="20" FontAttributes="Bold" Margin="0,20,0,10"/>
+
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                <Frame Grid.Row="0" Grid.Column="0" BackgroundColor="#F5DEB3" CornerRadius="10" Padding="20">
+                    <StackLayout>
+                        <Label Text="🍞" FontSize="30" HorizontalOptions="Center"/>
+                        <Label Text="Pan" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    </StackLayout>
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCategoryTapped" CommandParameter="Panadería"/>
+                        <!-- CAMBIO AQUÍ -->
+                    </Frame.GestureRecognizers>
+                </Frame>
+
+                <Frame Grid.Row="0" Grid.Column="1" BackgroundColor="#FFE4E1" CornerRadius="10" Padding="20">
+                    <StackLayout>
+                        <Label Text="🎂" FontSize="30" HorizontalOptions="Center"/>
+                        <Label Text="Pastel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    </StackLayout>
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCategoryTapped" CommandParameter="Pastelería Fina"/>
+                        <!-- CAMBIO AQUÍ -->
+                    </Frame.GestureRecognizers>
+                </Frame>
+
+                <Frame Grid.Row="1" Grid.Column="0" BackgroundColor="#E6E6FA" CornerRadius="10" Padding="20">
+                    <StackLayout>
+                        <Label Text="🥐" FontSize="30" HorizontalOptions="Center"/>
+                        <Label Text="Pasteles" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    </StackLayout>
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCategoryTapped" CommandParameter="Bollería"/>
+                        <!-- CAMBIO AQUÍ -->
+                    </Frame.GestureRecognizers>
+                </Frame>
+
+                <Frame Grid.Row="1" Grid.Column="1" BackgroundColor="#F0E68C" CornerRadius="10" Padding="20">
+                    <StackLayout>
+                        <Label Text="🧁" FontSize="30" HorizontalOptions="Center"/>
+                        <Label Text="Muffins" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    </StackLayout>
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCategoryTapped" CommandParameter="Cupcakes y Muffins"/>
+                        <!-- CAMBIO AQUÍ -->
+                    </Frame.GestureRecognizers>
+                </Frame>
+            </Grid>
+
+            <!-- Contact Info -->
+            <Frame BackgroundColor="#F5F5F5" CornerRadius="10" Padding="15" Margin="0,20,0,0">
+                <StackLayout>
+                    <Label Text="Contactanos" FontSize="18" FontAttributes="Bold" TextColor="Black"/>
+                    <Label Text="📞 (+593) 987544126" TextColor="Black"/>
+                    <Label Text="📧 info@bakeryshop.com" TextColor="Black"/>
+                    <Label Text="📍 123 Bakery Street, Sweet City" TextColor="Black"/>
+                </StackLayout>
+            </Frame>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>
