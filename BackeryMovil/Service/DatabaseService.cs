@@ -18,11 +18,12 @@ namespace BackeryMovil.Services
 
             var databasePath = Path.Combine(FileSystem.AppDataDirectory, "bakery.db");
             // ¡PARA DEPURACIÓN SOLAMENTE! Elimina la base de datos para forzar un re-seed
-            if (File.Exists(databasePath))
-            {
-                File.Delete(databasePath);
-                Debug.WriteLine("DatabaseService: Existing database file deleted for re-seeding.");
-            }
+            // Comentar o eliminar la siguiente línea para que los datos persistan
+            // if (File.Exists(databasePath))
+            // {
+            //     File.Delete(databasePath);
+            //     Debug.WriteLine("DatabaseService: Existing database file deleted for re-seeding.");
+            // }
             Debug.WriteLine($"DatabaseService: Initializing database at {databasePath}");
             _database = new SQLiteAsyncConnection(databasePath);
 
@@ -43,28 +44,26 @@ namespace BackeryMovil.Services
             {
                 Debug.WriteLine("DatabaseService: Seeding initial categories...");
                 var categories = new List<Category>
-               {
-                   new Category { Name = "Panadería", Description = "Panes artesanales y de molde", IconName = "🍞" },
-                   new Category { Name = "Pastelería Fina", Description = "Pasteles, tartas y postres elaborados", IconName = "🎂" },
-                   new Category { Name = "Bollería", Description = "Croissants, donuts y hojaldre", IconName = "🥐" },
-                   new Category { Name = "Cupcakes y Muffins", Description = "Variedad de cupcakes y muffins", IconName = "🧁" },
-                   new Category { Name = "Galletas y Bizcochos", Description = "Galletas caseras y bizcochos", IconName = "🍪" }
-                   // Si quieres solo 5, asegúrate de que solo haya 5 elementos aquí.
-                   // new Category { Name = "Bebidas", Description = "Bebidas frías y calientes", IconName = "☕" } // Si esta línea está, tendrás 6 categorías.
-               };
+             {
+                 new Category { Name = "Panadería", Description = "Panes artesanales y de molde", IconName = "🍞" },
+                 new Category { Name = "Pastelería Fina", Description = "Pasteles, tartas y postres elaborados", IconName = "🎂" },
+                 new Category { Name = "Bollería", Description = "Croissants, donuts y hojaldre", IconName = "🥐" },
+                 new Category { Name = "Cupcakes y Muffins", Description = "Variedad de cupcakes y muffins", IconName = "🧁" },
+                 new Category { Name = "Galletas y Bizcochos", Description = "Galletas caseras y bizcochos", IconName = "🍪" }
+             };
 
                 await _database.InsertAllAsync(categories);
                 Debug.WriteLine($"DatabaseService: {categories.Count} categories seeded.");
 
                 Debug.WriteLine("DatabaseService: Seeding initial products...");
                 var products = new List<Product>
-               {
-                   new Product { Name = "Pan Integral", Description = "Pan integral con semillas", Price = 3.50m, CategoryId = 1, StockQuantity = 20 },
-                   new Product { Name = "Croissant", Description = "Croissant de mantequilla", Price = 2.00m, CategoryId = 3, StockQuantity = 15 },
-                   new Product { Name = "Torta de Chocolate", Description = "Torta húmeda de chocolate", Price = 25.00m, CategoryId = 2, StockQuantity = 5 },
-                   new Product { Name = "Muffin de Arándanos", Description = "Muffin con arándanos frescos", Price = 2.75m, CategoryId = 4, StockQuantity = 12 },
-                   new Product { Name = "Galletas de Avena", Description = "Galletas caseras de avena", Price = 1.50m, CategoryId = 5, StockQuantity = 30 }
-               };
+             {
+                 new Product { Name = "Pan Integral", Description = "Pan integral con semillas", Price = 3.50m, CategoryId = 1, StockQuantity = 20, ImagenUrl = "/images/placeholder.png" },
+                 new Product { Name = "Croissant", Description = "Croissant de mantequilla", Price = 2.00m, CategoryId = 3, StockQuantity = 15, ImagenUrl = "/images/placeholder.png" },
+                 new Product { Name = "Torta de Chocolate", Description = "Torta húmeda de chocolate", Price = 25.00m, CategoryId = 2, StockQuantity = 5, ImagenUrl = "/images/placeholder.png" },
+                 new Product { Name = "Muffin de Arándanos", Description = "Muffin con arándanos frescos", Price = 2.75m, CategoryId = 4, StockQuantity = 12, ImagenUrl = "/images/placeholder.png" },
+                 new Product { Name = "Galletas de Avena", Description = "Galletas caseras de avena", Price = 1.50m, CategoryId = 5, StockQuantity = 30, ImagenUrl = "/images/placeholder.png" }
+             };
 
                 await _database.InsertAllAsync(products);
                 Debug.WriteLine($"DatabaseService: {products.Count} products seeded.");

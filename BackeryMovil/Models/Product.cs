@@ -18,8 +18,8 @@ namespace BackeryMovil.Models
         [Required]
         public decimal Price { get; set; }
 
-        // Esta propiedad debe almacenar la URL de la imagen, ya sea local o remota
-        public string ImagePath { get; set; } = string.Empty;
+        // Cambiar ImagePath por ImagenUrl para coincidir con la API
+        public string ImagenUrl { get; set; } = string.Empty;
 
         [Required]
         public int CategoryId { get; set; }
@@ -35,8 +35,17 @@ namespace BackeryMovil.Models
         [Ignore]
         public Category? Category { get; set; }
 
-        public int? ApiId { get; set; }
+        // Para mapear con la API web (ProductoId en lugar de Id)
+        public int? ProductoId { get; set; }
         public bool IsSynced { get; set; } = false;
         public DateTime? LastSyncAt { get; set; }
+
+        // Propiedad de compatibilidad para ImagePath
+        [Ignore]
+        public string ImagePath
+        {
+            get => ImagenUrl;
+            set => ImagenUrl = value;
+        }
     }
 }

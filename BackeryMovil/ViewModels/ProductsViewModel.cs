@@ -80,6 +80,7 @@ namespace BackeryMovil.ViewModels
 
         public async Task InitializeAsync()
         {
+            Debug.WriteLine("ProductsViewModel: InitializeAsync called.");
             await LoadCategoriesAsync();
             await LoadProductsAsync();
         }
@@ -103,11 +104,13 @@ namespace BackeryMovil.ViewModels
                         {
                             Products.Add(product);
                         }
+                        Debug.WriteLine($"ProductsViewModel: Filtered by category '{categoryName}', found {Products.Count} products.");
                     }
                 }
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Error filtering products: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error al filtrar productos: {ex.Message}", "OK");
             }
         }
@@ -119,17 +122,20 @@ namespace BackeryMovil.ViewModels
             try
             {
                 IsBusy = true;
+                Debug.WriteLine("ProductsViewModel: Loading products from DatabaseService...");
                 var products = await _databaseService.GetProductsAsync();
                 Products.Clear();
 
                 foreach (var product in products)
                 {
                     Products.Add(product);
-                    Debug.WriteLine($"ProductsViewModel: Loaded product from DB: {product.Name}, Desc: {product.Description}, Price: {product.Price}, Stock: {product.StockQuantity}");
+                    Debug.WriteLine($"ProductsViewModel: Added product to ObservableCollection: {product.Name}, ID: {product.Id}, API ID: {product.ProductoId}");
                 }
+                Debug.WriteLine($"ProductsViewModel: Finished loading products. Total in collection: {Products.Count}");
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Error loading products: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error al cargar productos: {ex.Message}", "OK");
             }
             finally
@@ -142,6 +148,7 @@ namespace BackeryMovil.ViewModels
         {
             try
             {
+                Debug.WriteLine("ProductsViewModel: Loading categories from DatabaseService...");
                 var categories = await _databaseService.GetCategoriesAsync();
                 Categories.Clear();
 
@@ -149,15 +156,18 @@ namespace BackeryMovil.ViewModels
                 {
                     Categories.Add(category);
                 }
+                Debug.WriteLine($"ProductsViewModel: Finished loading categories. Total in collection: {Categories.Count}");
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Error loading categories: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error al cargar categorías: {ex.Message}", "OK");
             }
         }
 
         private async Task AddProductAsync()
         {
+            Debug.WriteLine("ProductsViewModel: Navigating to createproduct page.");
             await Shell.Current.GoToAsync("createproduct");
         }
 
@@ -168,10 +178,12 @@ namespace BackeryMovil.ViewModels
             try
             {
                 SelectedProduct = product;
+                Debug.WriteLine($"ProductsViewModel: Navigating to editproduct page for product ID: {product.Id}");
                 await Shell.Current.GoToAsync($"editproduct?productId={product.Id}");
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Error editing product: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error al editar producto: {ex.Message}", "OK");
             }
         }
@@ -193,20 +205,24 @@ namespace BackeryMovil.ViewModels
                     if (!string.IsNullOrEmpty(product.ImagePath))
                     {
                         _fileService.DeleteImage(product.ImagePath);
+                        Debug.WriteLine($"ProductsViewModel: Deleted local image for product: {product.Name}");
                     }
 
                     await _databaseService.DeleteProductAsync(product);
                     Products.Remove(product);
+                    Debug.WriteLine($"ProductsViewModel: Deleted product from local DB and UI: {product.Name}");
                 }
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Error deleting product: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error al eliminar producto: {ex.Message}", "OK");
             }
         }
 
         private async Task SearchProductsAsync(string searchText)
         {
+            Debug.WriteLine($"ProductsViewModel: Searching for products with text: '{searchText}'");
             if (string.IsNullOrWhiteSpace(searchText))
             {
                 await LoadProductsAsync();
@@ -225,9 +241,11 @@ namespace BackeryMovil.ViewModels
                 {
                     Products.Add(product);
                 }
+                Debug.WriteLine($"ProductsViewModel: Search completed. Found {Products.Count} products.");
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Error in search: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error en búsqueda: {ex.Message}", "OK");
             }
         }
@@ -239,20 +257,28 @@ namespace BackeryMovil.ViewModels
             try
             {
                 IsBusy = true;
+
+                // Mostrar indicador de progreso
+                await Application.Current!.MainPage!.DisplayAlert("Sincronización", "Iniciando sincronización con el servidor...", "OK");
+                Debug.WriteLine("ProductsViewModel: Starting data sync.");
+
                 var success = await _syncService.SyncAllDataAsync();
 
                 if (success)
                 {
-                    await Application.Current!.MainPage!.DisplayAlert("Éxito", "Datos sincronizados correctamente", "OK");
-                    await LoadProductsAsync();
+                    await Application.Current!.MainPage!.DisplayAlert("Éxito", "Datos sincronizados correctamente con el servidor", "OK");
+                    await LoadProductsAsync(); // Recargar productos después de la sincronización
+                    Debug.WriteLine("ProductsViewModel: Data sync successful, products reloaded.");
                 }
                 else
                 {
-                    await Application.Current!.MainPage!.DisplayAlert("Error", "Error al sincronizar datos", "OK");
+                    await Application.Current!.MainPage!.DisplayAlert("Error", "Error al sincronizar datos. Verifique su conexión a internet.", "OK");
+                    Debug.WriteLine("ProductsViewModel: Data sync failed.");
                 }
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Sync error: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error de sincronización: {ex.Message}", "OK");
             }
             finally
@@ -275,27 +301,36 @@ namespace BackeryMovil.ViewModels
 
             try
             {
+                Debug.WriteLine($"ProductsViewModel: Taking photo for product: {product.Name}");
                 var imagePath = await _fileService.SaveImageFromCameraAsync();
                 if (!string.IsNullOrEmpty(imagePath))
                 {
                     if (!string.IsNullOrEmpty(product.ImagePath))
                     {
                         _fileService.DeleteImage(product.ImagePath);
+                        Debug.WriteLine($"ProductsViewModel: Deleted old image for product: {product.Name}");
                     }
 
                     product.ImagePath = imagePath;
                     product.IsSynced = false;
                     await _databaseService.SaveProductAsync(product);
+                    Debug.WriteLine($"ProductsViewModel: Saved new photo for product: {product.Name}, path: {imagePath}");
 
+                    // Actualizar la colección para que la UI se refresque
                     var index = Products.IndexOf(product);
                     if (index >= 0)
                     {
-                        Products[index] = product;
+                        Products[index] = product; // Esto debería forzar la actualización de la UI
                     }
+                }
+                else
+                {
+                    Debug.WriteLine($"ProductsViewModel: No photo taken for product: {product.Name}");
                 }
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Error taking photo: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error al tomar foto: {ex.Message}", "OK");
             }
         }
@@ -306,27 +341,36 @@ namespace BackeryMovil.ViewModels
 
             try
             {
+                Debug.WriteLine($"ProductsViewModel: Picking photo for product: {product.Name}");
                 var imagePath = await _fileService.SaveImageFromGalleryAsync();
                 if (!string.IsNullOrEmpty(imagePath))
                 {
                     if (!string.IsNullOrEmpty(product.ImagePath))
                     {
                         _fileService.DeleteImage(product.ImagePath);
+                        Debug.WriteLine($"ProductsViewModel: Deleted old image for product: {product.Name}");
                     }
 
                     product.ImagePath = imagePath;
                     product.IsSynced = false;
                     await _databaseService.SaveProductAsync(product);
+                    Debug.WriteLine($"ProductsViewModel: Saved new picked photo for product: {product.Name}, path: {imagePath}");
 
+                    // Actualizar la colección para que la UI se refresque
                     var index = Products.IndexOf(product);
                     if (index >= 0)
                     {
-                        Products[index] = product;
+                        Products[index] = product; // Esto debería forzar la actualización de la UI
                     }
+                }
+                else
+                {
+                    Debug.WriteLine($"ProductsViewModel: No photo picked for product: {product.Name}");
                 }
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"ProductsViewModel: Error picking photo: {ex.Message}");
                 await Application.Current!.MainPage!.DisplayAlert("Error", $"Error al seleccionar foto: {ex.Message}", "OK");
             }
         }

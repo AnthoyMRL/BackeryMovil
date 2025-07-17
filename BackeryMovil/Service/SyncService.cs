@@ -1,4 +1,6 @@
-﻿namespace BackeryMovil.Services
+﻿using System.Diagnostics;
+
+namespace BackeryMovil.Services
 {
     public class SyncService
     {
@@ -15,141 +17,167 @@
         {
             try
             {
-                await SyncCategoriesAsync();
-                await SyncProductsAsync();
-                await SyncOrdersAsync();
+                Debug.WriteLine("SyncService: Starting full sync...");
+
+                // Sincronizar productos desde la API
+                await SyncProductsFromApiAsync();
+
+                // Sincronizar productos locales no sincronizados hacia la API
+                await SyncLocalProductsToApiAsync();
+
+                Debug.WriteLine("SyncService: Full sync completed successfully");
                 return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Sync error: {ex.Message}");
+                Debug.WriteLine($"SyncService: Sync error: {ex.Message}");
                 return false;
             }
         }
 
-        private async Task SyncCategoriesAsync()
+        private async Task SyncProductsFromApiAsync()
         {
-            var localCategories = await _databaseService.GetCategoriesAsync();
-            var unsyncedCategories = localCategories.Where(c => !c.IsSynced).ToList();
-
-            foreach (var category in unsyncedCategories)
+            try
             {
-                if (category.ApiId == null)
+                Debug.WriteLine("SyncService: Syncing products from API...");
+
+                var apiProducts = await _apiService.GetProductsAsync();
+                Debug.WriteLine($"SyncService: Retrieved {apiProducts.Count} products from API");
+
+                foreach (var apiProduct in apiProducts)
                 {
-                    // Usar el nuevo método CreateCategoryAsync que envía multipart/form-data
-                    var apiCategory = await _apiService.CreateCategoryAsync(category);
-                    if (apiCategory != null)
+                    // Buscar si el producto ya existe localmente
+                    var localProducts = await _databaseService.GetProductsAsync();
+                    var existingProduct = localProducts.FirstOrDefault(p => p.ProductoId == apiProduct.ProductoId);
+
+                    if (existingProduct == null)
                     {
-                        category.ApiId = apiCategory.Id;
-                        category.IsSynced = true;
-                        category.LastSyncAt = DateTime.Now;
-                        await _databaseService.SaveCategoryAsync(category);
+                        // Producto nuevo desde la API
+                        apiProduct.Id = 0; // Asegurar que sea un nuevo registro local
+                        apiProduct.IsSynced = true;
+                        apiProduct.LastSyncAt = DateTime.Now;
+
+                        await _databaseService.SaveProductAsync(apiProduct);
+                        Debug.WriteLine($"SyncService: Added new product from API: {apiProduct.Name}");
                     }
-                }
-                else
-                {
-                    // Usar el nuevo método UpdateCategoryAsync que envía multipart/form-data
-                    var apiCategory = await _apiService.UpdateCategoryAsync(category);
-                    if (apiCategory != null)
+                    else
                     {
-                        category.IsSynced = true;
-                        category.LastSyncAt = DateTime.Now;
-                        await _databaseService.SaveCategoryAsync(category);
+                        // Actualizar producto existente con datos de la API
+                        existingProduct.Name = apiProduct.Name;
+                        existingProduct.Description = apiProduct.Description;
+                        existingProduct.Price = apiProduct.Price;
+                        existingProduct.ImagenUrl = apiProduct.ImagenUrl;
+                        existingProduct.CategoryId = apiProduct.CategoryId;
+                        existingProduct.IsAvailable = apiProduct.IsAvailable;
+                        existingProduct.StockQuantity = apiProduct.StockQuantity;
+                        existingProduct.IsSynced = true;
+                        existingProduct.LastSyncAt = DateTime.Now;
+
+                        await _databaseService.SaveProductAsync(existingProduct);
+                        Debug.WriteLine($"SyncService: Updated existing product: {existingProduct.Name}");
                     }
                 }
             }
-
-            var apiCategories = await _apiService.GetCategoriesAsync();
-            foreach (var apiCategory in apiCategories)
+            catch (Exception ex)
             {
-                var localCategory = localCategories.FirstOrDefault(c => c.ApiId == apiCategory.Id);
-                if (localCategory == null)
-                {
-                    apiCategory.ApiId = apiCategory.Id;
-                    apiCategory.Id = 0; // Asegurarse de que sea un nuevo registro local
-                    apiCategory.IsSynced = true;
-                    apiCategory.LastSyncAt = DateTime.Now;
-                    await _databaseService.SaveCategoryAsync(apiCategory);
-                }
-                // Opcional: Si la categoría existe localmente pero ha cambiado en la API, actualizarla.
-                // Esto requeriría lógica para detectar cambios y actualizar. Por ahora, solo se añade si no existe.
+                Debug.WriteLine($"SyncService: Error syncing from API: {ex.Message}");
+                throw;
             }
         }
 
-        private async Task SyncProductsAsync()
+        private async Task SyncLocalProductsToApiAsync()
         {
-            var localProducts = await _databaseService.GetProductsAsync();
-            var unsyncedProducts = localProducts.Where(p => !p.IsSynced).ToList();
-
-            foreach (var product in unsyncedProducts)
+            try
             {
-                if (product.ApiId == null)
+                Debug.WriteLine("SyncService: Syncing local products to API...");
+
+                var localProducts = await _databaseService.GetProductsAsync();
+                var unsyncedProducts = localProducts.Where(p => !p.IsSynced || p.ProductoId == null).ToList();
+
+                Debug.WriteLine($"SyncService: Found {unsyncedProducts.Count} unsynced local products");
+
+                foreach (var product in unsyncedProducts)
                 {
-                    var apiProduct = await _apiService.CreateProductAsync(product, product.ImagePath);
-                    if (apiProduct != null)
+                    try
                     {
-                        product.ApiId = apiProduct.Id;
-                        product.IsSynced = true;
-                        product.LastSyncAt = DateTime.Now;
-                        await _databaseService.SaveProductAsync(product);
+                        if (product.ProductoId == null)
+                        {
+                            Debug.WriteLine($"SyncService: Attempting to create product in API: {product.Name}");
+
+                            // Validar datos antes de enviar
+                            if (string.IsNullOrEmpty(product.Name))
+                            {
+                                product.Name = "Producto sin nombre";
+                            }
+
+                            if (product.CategoryId <= 0)
+                            {
+                                product.CategoryId = 1; // Categoría por defecto
+                            }
+
+                            // Crear nuevo producto en la API
+                            var apiProduct = await _apiService.CreateProductAsync(product, product.ImagenUrl);
+                            if (apiProduct != null)
+                            {
+                                product.ProductoId = apiProduct.ProductoId;
+                                product.IsSynced = true;
+                                product.LastSyncAt = DateTime.Now;
+
+                                // Actualizar la URL de la imagen si la API devolvió una nueva
+                                if (!string.IsNullOrEmpty(apiProduct.ImagenUrl))
+                                {
+                                    product.ImagenUrl = apiProduct.ImagenUrl;
+                                }
+
+                                await _databaseService.SaveProductAsync(product);
+                                Debug.WriteLine($"SyncService: Successfully created product in API: {product.Name}");
+                            }
+                            else
+                            {
+                                Debug.WriteLine($"SyncService: Failed to create product in API: {product.Name}");
+                            }
+                        }
+                        // Nota: No implementamos UPDATE porque la API actual no tiene PUT
+                        // Si agregas un endpoint PUT, puedes implementar la actualización aquí
                     }
-                }
-                else
-                {
-                    var apiProduct = await _apiService.UpdateProductAsync(product, product.ImagePath);
-                    if (apiProduct != null)
+                    catch (Exception ex)
                     {
-                        product.IsSynced = true;
-                        product.LastSyncAt = DateTime.Now;
-                        await _databaseService.SaveProductAsync(product);
+                        Debug.WriteLine($"SyncService: Error syncing product {product.Name}: {ex.Message}");
+                        // Continuar con el siguiente producto en caso de error
                     }
                 }
             }
-
-            var apiProducts = await _apiService.GetProductsAsync();
-            foreach (var apiProduct in apiProducts)
+            catch (Exception ex)
             {
-                var localProduct = localProducts.FirstOrDefault(p => p.ApiId == apiProduct.Id);
-                if (localProduct == null)
-                {
-                    apiProduct.ApiId = apiProduct.Id;
-                    apiProduct.Id = 0;
-                    apiProduct.IsSynced = true;
-                    apiProduct.LastSyncAt = DateTime.Now;
-                    await _databaseService.SaveProductAsync(apiProduct);
-                }
+                Debug.WriteLine($"SyncService: Error syncing to API: {ex.Message}");
+                throw;
             }
+        }
+
+        public async Task<bool> SyncProductsAsync()
+        {
+            try
+            {
+                await SyncProductsFromApiAsync();
+                await SyncLocalProductsToApiAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"SyncService: Product sync error: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Métodos placeholder para categorías y órdenes
+        private async Task SyncCategoriesAsync()
+        {
+            Debug.WriteLine("SyncService: Category sync not implemented yet");
         }
 
         private async Task SyncOrdersAsync()
         {
-            var localOrders = await _databaseService.GetOrdersAsync();
-            var unsyncedOrders = localOrders.Where(o => !o.IsSynced).ToList();
-
-            foreach (var order in unsyncedOrders)
-            {
-                if (order.ApiId == null)
-                {
-                    var apiOrder = await _apiService.CreateOrderAsync(order);
-                    if (apiOrder != null)
-                    {
-                        order.ApiId = apiOrder.Id;
-                        order.IsSynced = true;
-                        order.LastSyncAt = DateTime.Now;
-                        await _databaseService.SaveOrderAsync(order);
-                    }
-                }
-                else
-                {
-                    var apiOrder = await _apiService.UpdateOrderAsync(order);
-                    if (apiOrder != null)
-                    {
-                        order.IsSynced = true;
-                        order.LastSyncAt = DateTime.Now;
-                        await _databaseService.SaveOrderAsync(order);
-                    }
-                }
-            }
+            Debug.WriteLine("SyncService: Order sync not implemented yet");
         }
     }
 }
